@@ -518,12 +518,32 @@
         completion(albums);
     };
 }
+- (BOOL)assetIsInICloudWithPublicAPI:(PHAsset *)asset {
+    if (!asset || asset.mediaType != PHAssetMediaTypeImage) {
+        return NO;
+    }
+    __block BOOL isICloud = NO;
+    PHImageRequestOptions *options = [[PHImageRequestOptions alloc] init];
+    options.networkAccessAllowed = NO;
+    options.synchronous = YES;
+    options.deliveryMode = PHImageRequestOptionsDeliveryModeFastFormat;
+    if (@available(iOS 13.0, *)) {
+        [[PHImageManager defaultManager] requestImageDataAndOrientationForAsset:asset options:options resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, CGImagePropertyOrientation orientation, NSDictionary * _Nullable info) {
+            isICloud = [[info objectForKey:PHImageResultIsInCloudKey] boolValue] && !imageData;
+        }];
+    }else {
+        [[PHImageManager defaultManager] requestImageDataForAsset:asset options:options resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
+            isICloud = [[info objectForKey:PHImageResultIsInCloudKey] boolValue] && !imageData;
+        }];
+    }
+    return isICloud;
+}
 - (HXPhotoModel *)photoModelWithAsset:(PHAsset *)asset {
     HXPhotoModel *photoModel = [[HXPhotoModel alloc] init];
     photoModel.asset = asset;
     // ios13之后可能不准，但是无关紧要。
     // 因为在获取的时候已经做了iCloud判断了。这里只是在展示的时候方便辨别
-    BOOL isICloud = [[asset valueForKey:@"isCloudPlaceholder"] boolValue];
+    BOOL isICloud = [self assetIsInICloudWithPublicAPI:asset];
     if (isICloud) {
         if (_iCloudAssetArray.count) {
             if (![_iCloudAssetArray containsObject:asset]) {
