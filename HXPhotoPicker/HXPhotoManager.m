@@ -541,18 +541,6 @@
 - (HXPhotoModel *)photoModelWithAsset:(PHAsset *)asset {
     HXPhotoModel *photoModel = [[HXPhotoModel alloc] init];
     photoModel.asset = asset;
-    // ios13之后可能不准，但是无关紧要。
-    // 因为在获取的时候已经做了iCloud判断了。这里只是在展示的时候方便辨别
-    BOOL isICloud = [self assetIsInICloudWithPublicAPI:asset];
-    if (isICloud) {
-        if (_iCloudAssetArray.count) {
-            if (![_iCloudAssetArray containsObject:asset]) {
-                photoModel.isICloud = YES;
-            }
-        }else {
-            photoModel.isICloud = YES;
-        }
-    }
     if (_selectedAssetList) {
         if ([_selectedAssetList containsObject:asset]) {
             HXPhotoModel *selectModel = [self.tempSelectedModelList objectAtIndex:[_selectedAssetList indexOfObject:asset]];
